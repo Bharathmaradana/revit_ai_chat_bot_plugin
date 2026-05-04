@@ -1,0 +1,38 @@
+﻿<Window x:Class="ChatUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Revit AI Assistant"
+        Height="500"
+        Width="600"
+        Background="#1E1E1E">
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Chat Output -->
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <TextBlock x:Name="ChatOutput"
+                       Foreground="White"
+                       TextWrapping="Wrap"
+                       FontSize="14"/>
+        </ScrollViewer>
+
+        <!-- Input -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0">
+            <TextBox x:Name="ChatInput"
+                     Width="450"
+                     Height="30"
+                     Background="#2D2D30"
+                     Foreground="White"/>
+
+            <Button Content="Send"
+                    Width="100"
+                    Height="30"
+                    Margin="10,0,0,0"
+                    Click="Send_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
