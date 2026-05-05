@@ -21,14 +21,24 @@ A Revit plugin that integrates an AI chatbot directly into Autodesk Revit, enabl
 User (Chat UI)
       ↓
 MainWindow (WPF)
-      ↓ (delegate)
-Command (Revit)
+      ↓ (delegate → async call)
+Command (Revit Entry Point)
       ↓
-ChatProcessor
+ExternalEvent.Raise()   (Thread Bridge Trigger)
       ↓
-ChatService (Gemini API)
+RevitEventHandler.Execute()   (Runs on Revit MAIN thread)
       ↓
-Response → UI
+RoomService / DoorService     (Revit API data extraction)
+      ↓
+Structured JSON Data
+      ↓
+ChatProcessor                
+      ↓
+ChatService (Gemini API)   
+      ↓
+AI Response
+      ↓
+MainWindow (UI Update)
 ```
 
 ---
