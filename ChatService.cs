@@ -75,10 +75,10 @@ namespace ClassLibrary3
                 {
                     client.Timeout = TimeSpan.FromSeconds(30);
 
-                    // ✅ SAME endpoint as your JS
+                    //  SAME endpoint as your JS
                     string url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
 
-                    // ✅ SAME payload structure
+                    //  SAME payload structure
                     var payload = new
                     {
                         contents = new[]
@@ -104,7 +104,7 @@ namespace ClassLibrary3
 
                     Logger.Log("Request: " + json);
 
-                    // ✅ Header instead of query param (like your JS)
+                    //  Header instead of query param (like your JS)
                     client.DefaultRequestHeaders.Clear();
                     client.DefaultRequestHeaders.Add("x-goog-api-key", apiKey);
 
