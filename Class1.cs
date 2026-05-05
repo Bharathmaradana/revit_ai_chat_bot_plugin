@@ -170,6 +170,59 @@ namespace ClassLibrary3
         }
     }
 
+    //[Transaction(TransactionMode.Manual)]
+    //public class Command : IExternalCommand
+    //{
+    //    public Result Execute(
+    //        ExternalCommandData commandData,
+    //        ref string message,
+    //        ElementSet elements)
+    //    {
+    //        try
+    //        {
+    //            UIDocument uiDoc = commandData.Application.ActiveUIDocument;
+
+    //            MainWindow window = new MainWindow();
+
+    //            // 🔥 Inject processor (IMPORTANT)
+    //            MainWindow.ProcessMessage = async (input) =>
+    //            {
+    //                Logger.Log("User Input: " + input);
+
+    //                // Step 1: Extract data (safe - main thread)
+    //                string data = "";
+
+    //                if (input.ToLower().Contains("room"))
+    //                {
+    //                    var rooms = RoomService.GetRooms(uiDoc);
+    //                    data = Newtonsoft.Json.JsonConvert.SerializeObject(rooms);
+    //                    Logger.Log("User Input: " + data);
+    //                }
+    //                else if (input.ToLower().Contains("door"))
+    //                {
+    //                    data = RevitDataService.GetDoorsJson(uiDoc);
+    //                }
+
+    //                // Step 2: Call LLM
+    //                return await ChatProcessor.ProcessAsync(input, data);
+    //            };
+
+    //            // Attach to Revit
+    //            IntPtr revitHandle = commandData.Application.MainWindowHandle;
+    //            WindowInteropHelper helper = new WindowInteropHelper(window);
+    //            helper.Owner = revitHandle;
+
+    //            window.ShowDialog();
+
+    //            return Result.Succeeded;
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            TaskDialog.Show("Error", ex.ToString());
+    //            return Result.Failed;
+    //        }
+    //    }
+    //}
     [Transaction(TransactionMode.Manual)]
     public class Command : IExternalCommand
     {
@@ -180,38 +233,44 @@ namespace ClassLibrary3
         {
             try
             {
-                UIDocument uiDoc = commandData.Application.ActiveUIDocument;
+                var uiDoc = commandData.Application.ActiveUIDocument;
 
-                MainWindow window = new MainWindow();
+                //  Init ExternalEvent
+                RevitEventManager.Initialize(uiDoc);
 
-                // 🔥 Inject processor (IMPORTANT)
+                var window = new MainWindow();
+
+                // Attach to Revit
+                new WindowInteropHelper(window)
+                {
+                    Owner = commandData.Application.MainWindowHandle
+                };
+
+                //  Core logic bridge
                 MainWindow.ProcessMessage = async (input) =>
                 {
                     Logger.Log("User Input: " + input);
 
-                    // Step 1: Extract data (safe - main thread)
-                    string data = "";
-
-                    if (input.ToLower().Contains("room"))
+                    var request = new RevitRequest
                     {
-                        var rooms = RoomService.GetRooms(uiDoc);
-                        data = Newtonsoft.Json.JsonConvert.SerializeObject(rooms);
-                    }
-                    else if (input.ToLower().Contains("door"))
-                    {
-                        data = RevitDataService.GetDoorsJson(uiDoc);
-                    }
+                        Query = input
+                    };
 
-                    // Step 2: Call LLM
-                    return await ChatProcessor.ProcessAsync(input, data);
+                    RevitEventManager.Handler.Request = request;
+
+                    //  Trigger Revit thread
+                    RevitEventManager.ExternalEvent.Raise();
+
+                    //  Wait for result
+                    while (request.Result == null)
+                        await Task.Delay(50);
+
+                    Logger.Log("Revit Data: " + request.Result);
+
+                    return await ChatProcessor.ProcessAsync(input, request.Result);
                 };
 
-                // Attach to Revit
-                IntPtr revitHandle = commandData.Application.MainWindowHandle;
-                WindowInteropHelper helper = new WindowInteropHelper(window);
-                helper.Owner = revitHandle;
-
-                window.ShowDialog();
+                window.Show(); // IMPORTANT (NOT ShowDialog)
 
                 return Result.Succeeded;
             }
@@ -222,7 +281,6 @@ namespace ClassLibrary3
             }
         }
     }
-
     public static class RevitDataService
     {
         public static string GetDoorsJson(UIDocument uiDoc)
