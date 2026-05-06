@@ -280,11 +280,6 @@ Use logs to debug:
 
 ---
 
-# License
-
-MIT License (or your preferred license)
-
----
 
 # Contribution
 
